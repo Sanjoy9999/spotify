@@ -18,28 +18,27 @@ function secondsToMinutesSeconds(seconds) {
 }
 
 async function getSongs(folder) {
-    currFolder = folder;
-  
-    // Change absolute path to relative path
-    let a = await fetch(`./songs/${folder}/`);
+  currFolder = folder;
+  try {
+    let a = await fetch(`./songs/${folder}`);
     let response = await a.text();
-    
+
     let div = document.createElement("div");
     div.innerHTML = response;
-    
+
     let as = div.getElementsByTagName("a");
     songs = [];
-  
+
     for (let index = 0; index < as.length; index++) {
       const element = as[index];
       if (element.href.endsWith(".mp3")) {
         songs.push(element.href.split(`/${folder}/`)[1]);
       }
     }
-  
+
     let songUL = document.querySelector(".songList ul");
     songUL.innerHTML = "";
-  
+
     for (const song of songs) {
       songUL.innerHTML += `
         <li>
@@ -53,95 +52,97 @@ async function getSongs(folder) {
           </div>
         </li>`;
     }
-  
+
     // Attach click event to each song
     Array.from(document.querySelectorAll(".songList li")).forEach((e) => {
       e.addEventListener("click", () => {
         playMusic(e.querySelector(".info div").innerText.trim());
       });
     });
-  
+
     return songs;
+  } catch (error) {
+    console.error("Error loading songs:", error);
   }
-  
-
-
-const playMusic = (track, pause = false) => {
-  // Change absolute path to relative path
-  currentSong.src = `./songs/${currFolder}/` + track;
-  if (!pause) {
-    currentSong.play();
-    play.src = "images/pause.svg";
-  }
-  document.querySelector(".songinfo").innerHTML = decodeURI(track);
-  document.querySelector(".songtime").innerHTML = "00:00 / 00:00";
-};
-
-
-
-async function displayAlbums() {
-  // Change absolute path to relative path
-  let response = await fetch('./songs/');
-  let text = await response.text();
-
-  let div = document.createElement("div");
-  div.innerHTML = text;
-
-  let anchors = div.getElementsByTagName("a");
-  let cardContainer = document.querySelector(".cardContainer");
-
-  for (let anchor of anchors) {
-    // Extract the href
-    let href = anchor.href;
-
-    // Only consider valid album folder links
-    if (href.includes("/songs/") && !href.endsWith("/")) {
-      // Get the folder name from the URL
-      let folder = href.split("/").slice(-1)[0];
-
-      // Skip the root "songs" folder itself
-      if (folder === "songs") continue;
-
-      console.log(`Extracted folder name: ${folder}`);
-
-      try {
-        // Change absolute path to relative path
-        let albumInfo = await fetch(`./songs/${folder}/info.json`);
-
-        if (!albumInfo.ok) {
-          throw new Error(`Could not fetch info.json for folder: ${folder}. Status: ${albumInfo.status}`);
-        }
-
-        let albumData = await albumInfo.json();
-
-        cardContainer.innerHTML += `
-          <div data-folder="${folder}" class="card">
-            <div class="play">
-              <svg width="16" height="16" viewBox="0 0 24 24">
-                <path d="M5 20V4L19 12L5 20Z" stroke="#141B34" fill="#000"></path>
-              </svg>
-            </div>
-            <img src="./songs/${folder}/cover.jpeg" alt="Album cover for ${albumData.title}">
-            <h2>${albumData.title}</h2>
-            <p>${albumData.description}</p>
-          </div>`;
-      } catch (error) {
-        console.error(`Error fetching album info for folder: ${folder}. Error:`, error);
-      }
-    }
-  }
-
-  // Attach click event to load playlist when an album is clicked
-  Array.from(document.getElementsByClassName("card")).forEach((e) => {
-    e.addEventListener("click", async (item) => {
-      let folder = item.currentTarget.dataset.folder;
-      songs = await getSongs(`songs/${folder}`);
-      playMusic(songs[0]);  // Play the first song when the album is clicked
-    });
-  });
 }
 
+const playMusic = (track, pause = false) => {
+  try {
+    currentSong.src = `./songs/${currFolder}/${track}`;
+    if (!pause) {
+      currentSong.play();
+      play.src = "images/pause.svg";
+    }
+    document.querySelector(".songinfo").innerHTML = decodeURI(track);
+    document.querySelector(".songtime").innerHTML = "00:00 / 00:00";
+  } catch (error) {
+    console.error("Error playing music:", error);
+  }
+};
 
+async function displayAlbums() {
+  try {
+    let response = await fetch('./songs/');
+    let text = await response.text();
+
+    let div = document.createElement("div");
+    div.innerHTML = text;
+
+    let anchors = div.getElementsByTagName("a");
+    let cardContainer = document.querySelector(".cardContainer");
+
+    for (let anchor of anchors) {
+      // Extract the href
+      let href = anchor.href;
+
+      // Only consider valid album folder links
+      if (href.includes("/songs/") && !href.endsWith("/")) {
+        // Get the folder name from the URL
+        let folder = href.split("/").slice(-1)[0];
+
+        // Skip the root "songs" folder itself
+        if (folder === "songs") continue;
+
+        console.log(`Extracted folder name: ${folder}`);
+
+        try {
+          let albumInfo = await fetch(`./songs/${folder}/info.json`);
+
+          if (!albumInfo.ok) {
+            throw new Error(`Could not fetch info.json for folder: ${folder}. Status: ${albumInfo.status}`);
+          }
+
+          let albumData = await albumInfo.json();
+
+          cardContainer.innerHTML += `
+            <div data-folder="${folder}" class="card">
+              <div class="play">
+                <svg width="16" height="16" viewBox="0 0 24 24">
+                  <path d="M5 20V4L19 12L5 20Z" stroke="#141B34" fill="#000"></path>
+                </svg>
+              </div>
+              <img src="./songs/${folder}/cover.jpeg" alt="Album cover">
+              <h2>${albumData.title}</h2>
+              <p>${albumData.description}</p>
+            </div>`;
+        } catch (error) {
+          console.error(`Error fetching album info for folder: ${folder}. Error:`, error);
+        }
+      }
+    }
+
+    // Attach click event to load playlist when an album is clicked
+    Array.from(document.getElementsByClassName("card")).forEach((e) => {
+      e.addEventListener("click", async (item) => {
+        let folder = item.currentTarget.dataset.folder;
+        songs = await getSongs(`songs/${folder}`);
+        playMusic(songs[0]);  // Play the first song when the album is clicked
+      });
+    });
+  } catch (error) {
+    console.error("Error displaying albums:", error);
+  }
+}
 
 async function main() {
   // Get the list of all the songs
@@ -161,7 +162,6 @@ async function main() {
       play.src = "images/play.svg";
     }
   });
- 
 
   // Handling song end event to reset the play button icon
   currentSong.addEventListener("ended", () => {
@@ -229,7 +229,6 @@ async function main() {
       }
     });
 
-
   // Change seekbar color according to song play
   currentSong.addEventListener("timeupdate", () => {
     const seekbar = document.querySelector(".seekbar");
@@ -275,7 +274,5 @@ async function main() {
       playMusic(songs[index + 0]);
     }
   });
-
- 
 }
 main();
