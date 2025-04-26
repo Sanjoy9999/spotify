@@ -20,7 +20,8 @@ function secondsToMinutesSeconds(seconds) {
 async function getSongs(folder) {
   currFolder = folder;
   try {
-    let a = await fetch(`./songs/${folder}`);
+    // Remove leading slash and fix path
+    let a = await fetch(`songs/${folder.replace("songs/", "")}`);
     let response = await a.text();
 
     let div = document.createElement("div");
@@ -32,7 +33,7 @@ async function getSongs(folder) {
     for (let index = 0; index < as.length; index++) {
       const element = as[index];
       if (element.href.endsWith(".mp3")) {
-        songs.push(element.href.split(`/${folder}/`)[1]);
+        songs.push(element.href.split(`${folder}/`)[1]);
       }
     }
 
@@ -68,7 +69,8 @@ async function getSongs(folder) {
 
 const playMusic = (track, pause = false) => {
   try {
-    currentSong.src = `./songs/${currFolder}/${track}`;
+    // Remove leading slash and fix path
+    currentSong.src = `songs/${currFolder.replace("songs/", "")}/${track}`;
     if (!pause) {
       currentSong.play();
       play.src = "images/pause.svg";
@@ -82,7 +84,8 @@ const playMusic = (track, pause = false) => {
 
 async function displayAlbums() {
   try {
-    let response = await fetch('./songs/');
+    // Fix the path
+    let response = await fetch('songs/');
     let text = await response.text();
 
     let div = document.createElement("div");
@@ -121,7 +124,7 @@ async function displayAlbums() {
                   <path d="M5 20V4L19 12L5 20Z" stroke="#141B34" fill="#000"></path>
                 </svg>
               </div>
-              <img src="./songs/${folder}/cover.jpeg" alt="Album cover">
+              <img src="songs/${folder}/cover.jpeg" alt="${albumData.title}">
               <h2>${albumData.title}</h2>
               <p>${albumData.description}</p>
             </div>`;
@@ -145,7 +148,7 @@ async function displayAlbums() {
 }
 
 async function main() {
-  // Get the list of all the songs
+  // Fix initial songs path
   await getSongs("songs/AChill_songs");
   playMusic(songs[0], true);
 
