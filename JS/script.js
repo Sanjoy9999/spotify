@@ -158,7 +158,7 @@ async function main() {
       play.src = "images/play.svg";
     }
   });
-  //If i click one songList li one song.It  will be play and pause svg will be change play svg and vice versa
+ 
 
   // Handling song end event to reset the play button icon
   currentSong.addEventListener("ended", () => {
@@ -225,7 +225,7 @@ async function main() {
           .src.replace("mute.svg", "volume.svg");
       }
     });
-  //i want change seekbar color according song play example work  to volume color
+
 
   // Change seekbar color according to song play
   currentSong.addEventListener("timeupdate", () => {
