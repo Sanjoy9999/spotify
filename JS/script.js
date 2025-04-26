@@ -20,9 +20,13 @@ function secondsToMinutesSeconds(seconds) {
 async function getSongs(folder) {
   currFolder = folder;
   try {
-    // Remove leading slash and fix path
-    let a = await fetch(`songs/${folder.replace("songs/", "")}`);
+    // Update path to use AChill_songs instead of songs/AChill_songs
+    let a = await fetch(`./AChill_songs/`);
     let response = await a.text();
+
+    if (!response) {
+      throw new Error("No songs found");
+    }
 
     let div = document.createElement("div");
     div.innerHTML = response;
@@ -33,44 +37,21 @@ async function getSongs(folder) {
     for (let index = 0; index < as.length; index++) {
       const element = as[index];
       if (element.href.endsWith(".mp3")) {
-        songs.push(element.href.split(`${folder}/`)[1]);
+        // Simplify path handling
+        songs.push(element.href.split("/").pop());
       }
     }
-
-    let songUL = document.querySelector(".songList ul");
-    songUL.innerHTML = "";
-
-    for (const song of songs) {
-      songUL.innerHTML += `
-        <li>
-          <img class="invert" width="34" src="images/music.svg" alt="">
-          <div class="info">
-            <div>${decodeURIComponent(song.replaceAll("%20", " "))}</div>
-          </div>
-          <div class="playnow">
-            <span>Play Now</span>
-            <img class="invert" src="images/play.svg" alt="">
-          </div>
-        </li>`;
-    }
-
-    // Attach click event to each song
-    Array.from(document.querySelectorAll(".songList li")).forEach((e) => {
-      e.addEventListener("click", () => {
-        playMusic(e.querySelector(".info div").innerText.trim());
-      });
-    });
-
     return songs;
   } catch (error) {
     console.error("Error loading songs:", error);
+    return [];
   }
 }
 
 const playMusic = (track, pause = false) => {
   try {
-    // Remove leading slash and fix path
-    currentSong.src = `songs/${currFolder.replace("songs/", "")}/${track}`;
+    // Simplify path handling
+    currentSong.src = `./${currFolder}/${track}`;
     if (!pause) {
       currentSong.play();
       play.src = "images/pause.svg";
@@ -84,62 +65,42 @@ const playMusic = (track, pause = false) => {
 
 async function displayAlbums() {
   try {
-    // Fix the path
-    let response = await fetch('songs/');
-    let text = await response.text();
-
-    let div = document.createElement("div");
-    div.innerHTML = text;
-
-    let anchors = div.getElementsByTagName("a");
+    // Use direct folder names instead of songs/
+    const folders = ['AChill_songs', 'BRomantic songs', 'CSad songs'];
     let cardContainer = document.querySelector(".cardContainer");
 
-    for (let anchor of anchors) {
-      // Extract the href
-      let href = anchor.href;
+    for (let folder of folders) {
+      try {
+        let albumInfo = await fetch(`./${folder}/info.json`);
 
-      // Only consider valid album folder links
-      if (href.includes("/songs/") && !href.endsWith("/")) {
-        // Get the folder name from the URL
-        let folder = href.split("/").slice(-1)[0];
+        if (!albumInfo.ok) continue;
 
-        // Skip the root "songs" folder itself
-        if (folder === "songs") continue;
+        let albumData = await albumInfo.json();
 
-        console.log(`Extracted folder name: ${folder}`);
-
-        try {
-          let albumInfo = await fetch(`./songs/${folder}/info.json`);
-
-          if (!albumInfo.ok) {
-            throw new Error(`Could not fetch info.json for folder: ${folder}. Status: ${albumInfo.status}`);
-          }
-
-          let albumData = await albumInfo.json();
-
-          cardContainer.innerHTML += `
-            <div data-folder="${folder}" class="card">
-              <div class="play">
-                <svg width="16" height="16" viewBox="0 0 24 24">
-                  <path d="M5 20V4L19 12L5 20Z" stroke="#141B34" fill="#000"></path>
-                </svg>
-              </div>
-              <img src="songs/${folder}/cover.jpeg" alt="${albumData.title}">
-              <h2>${albumData.title}</h2>
-              <p>${albumData.description}</p>
-            </div>`;
-        } catch (error) {
-          console.error(`Error fetching album info for folder: ${folder}. Error:`, error);
-        }
+        cardContainer.innerHTML += `
+          <div data-folder="${folder}" class="card">
+            <div class="play">
+              <svg width="16" height="16" viewBox="0 0 24 24">
+                <path d="M5 20V4L19 12L5 20Z" stroke="#141B34" fill="#000"></path>
+              </svg>
+            </div>
+            <img src="./${folder}/cover.jpeg" alt="${albumData.title}">
+            <h2>${albumData.title}</h2>
+            <p>${albumData.description}</p>
+          </div>`;
+      } catch (error) {
+        console.error(`Error loading album ${folder}:`, error);
       }
     }
 
-    // Attach click event to load playlist when an album is clicked
+    // Attach click events to cards
     Array.from(document.getElementsByClassName("card")).forEach((e) => {
       e.addEventListener("click", async (item) => {
         let folder = item.currentTarget.dataset.folder;
-        songs = await getSongs(`songs/${folder}`);
-        playMusic(songs[0]);  // Play the first song when the album is clicked
+        songs = await getSongs(folder);
+        if (songs.length > 0) {
+          playMusic(songs[0]);
+        }
       });
     });
   } catch (error) {
@@ -148,12 +109,16 @@ async function displayAlbums() {
 }
 
 async function main() {
-  // Fix initial songs path
-  await getSongs("songs/AChill_songs");
-  playMusic(songs[0], true);
-
-  // Display all the albums on the page
-  await displayAlbums();
+  try {
+    // Start with AChill_songs directly
+    await getSongs("AChill_songs");
+    if (songs && songs.length > 0) {
+      playMusic(songs[0], true);
+    }
+    await displayAlbums();
+  } catch (error) {
+    console.error("Error in main:", error);
+  }
 
   // Attach an event listener to play, next and previous
   play.addEventListener("click", () => {

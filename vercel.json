@@ -3,7 +3,7 @@
   "cleanUrls": true,
   "headers": [
     {
-      "source": "/songs/(.*)\\.mp3",
+      "source": "/(.*)\\.mp3",
       "headers": [
         {
           "key": "Content-Type",
@@ -12,19 +12,28 @@
       ]
     },
     {
-      "source": "/songs/(.*)\\.jpeg",
+      "source": "/(.*)\\.jpeg",
       "headers": [
         {
           "key": "Content-Type",
           "value": "image/jpeg"
         }
       ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
     }
   ],
   "rewrites": [
     {
-      "source": "/songs/:path*",
-      "destination": "/songs/:path*"
+      "source": "/(.*)",
+      "destination": "/$1"
     }
   ]
 }
