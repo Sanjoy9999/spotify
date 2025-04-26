@@ -1,31 +1,30 @@
 {
   "version": 2,
-  "routes": [
+  "cleanUrls": true,
+  "headers": [
     {
-      "src": "/songs/(.*)\\.mp3$",
-      "headers": {
-        "content-type": "audio/mpeg"
-      },
-      "dest": "/songs/$1.mp3"
+      "source": "/songs/(.*)\\.mp3",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "audio/mpeg"
+        }
+      ]
     },
     {
-      "src": "/songs/(.*)\\.jpeg$",
-      "headers": {
-        "content-type": "image/jpeg"
-      },
-      "dest": "/songs/$1.jpeg"
-    },
-    {
-      "src": "/songs/(.*)",
-      "dest": "/songs/$1",
-      "headers": {
-        "cache-control": "public, max-age=0, must-revalidate"
-      }
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
+      "source": "/songs/(.*)\\.jpeg",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "image/jpeg"
+        }
+      ]
     }
   ],
-  "cleanUrls": true
+  "rewrites": [
+    {
+      "source": "/songs/:path*",
+      "destination": "/songs/:path*"
+    }
+  ]
 }
