@@ -20,52 +20,65 @@ function secondsToMinutesSeconds(seconds) {
 async function getSongs(folder) {
   currFolder = folder;
   try {
-    // Update path to use AChill_songs instead of songs/AChill_songs
-    let a = await fetch(`./AChill_songs/`);
-    let response = await a.text();
+    let response = await fetch(`./${folder}/info.json`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    let data = await response.json();
+    songs = data.songs || [];
+    
+    let songUL = document.querySelector(".songList ul");
+    songUL.innerHTML = "";
 
-    if (!response) {
-      throw new Error("No songs found");
+    for (const song of songs) {
+      songUL.innerHTML += `
+        <li>
+          <img class="invert" width="34" src="images/music.svg" alt="">
+          <div class="info">
+            <div>${decodeURIComponent(song)}</div>
+          </div>
+          <div class="playnow">
+            <span>Play Now</span>
+            <img class="invert" src="images/play.svg" alt="">
+          </div>
+        </li>`;
     }
 
-    let div = document.createElement("div");
-    div.innerHTML = response;
+    Array.from(document.querySelectorAll(".songList li")).forEach((e) => {
+      e.addEventListener("click", () => {
+        playMusic(e.querySelector(".info div").innerText);
+      });
+    });
 
-    let as = div.getElementsByTagName("a");
-    songs = [];
-
-    for (let index = 0; index < as.length; index++) {
-      const element = as[index];
-      if (element.href.endsWith(".mp3")) {
-        // Simplify path handling
-        songs.push(element.href.split("/").pop());
-      }
-    }
     return songs;
   } catch (error) {
-    console.error("Error loading songs:", error);
+    console.error("Error loading songs:", error, folder);
     return [];
   }
 }
 
 const playMusic = (track, pause = false) => {
   try {
-    // Simplify path handling
     currentSong.src = `./${currFolder}/${track}`;
     if (!pause) {
-      currentSong.play();
-      play.src = "images/pause.svg";
+      currentSong.play()
+        .then(() => {
+          play.src = "images/pause.svg";
+        })
+        .catch(e => {
+          console.error("Error playing song:", e);
+          alert("Unable to play song. Please check if the file exists.");
+        });
     }
     document.querySelector(".songinfo").innerHTML = decodeURI(track);
     document.querySelector(".songtime").innerHTML = "00:00 / 00:00";
   } catch (error) {
-    console.error("Error playing music:", error);
+    console.error("Error setting up music:", error);
   }
 };
 
 async function displayAlbums() {
   try {
-    // Use direct folder names instead of songs/
     const folders = ['AChill_songs', 'BRomantic songs', 'CSad songs'];
     let cardContainer = document.querySelector(".cardContainer");
 
@@ -93,7 +106,6 @@ async function displayAlbums() {
       }
     }
 
-    // Attach click events to cards
     Array.from(document.getElementsByClassName("card")).forEach((e) => {
       e.addEventListener("click", async (item) => {
         let folder = item.currentTarget.dataset.folder;
@@ -110,8 +122,8 @@ async function displayAlbums() {
 
 async function main() {
   try {
-    // Start with AChill_songs directly
-    await getSongs("AChill_songs");
+    let defaultFolder = "AChill_songs";
+    await getSongs(defaultFolder);
     if (songs && songs.length > 0) {
       playMusic(songs[0], true);
     }
@@ -120,7 +132,6 @@ async function main() {
     console.error("Error in main:", error);
   }
 
-  // Attach an event listener to play, next and previous
   play.addEventListener("click", () => {
     if (currentSong.paused) {
       currentSong.play();
@@ -131,12 +142,10 @@ async function main() {
     }
   });
 
-  // Handling song end event to reset the play button icon
   currentSong.addEventListener("ended", () => {
-    play.src = "images/play.svg"; // Set to play icon when song ends
+    play.src = "images/play.svg";
   });
 
-  // Listen for timeupdate event
   currentSong.addEventListener("timeupdate", () => {
     document.querySelector(".songtime").innerHTML = `${secondsToMinutesSeconds(
       currentSong.currentTime
@@ -145,24 +154,20 @@ async function main() {
       (currentSong.currentTime / currentSong.duration) * 100 + "%";
   });
 
-  // Add an event listener to seekbar
   document.querySelector(".seekbar").addEventListener("click", (e) => {
     let percent = (e.offsetX / e.target.getBoundingClientRect().width) * 100;
     document.querySelector(".circle").style.left = percent + "%";
     currentSong.currentTime = (currentSong.duration * percent) / 100;
   });
 
-  // Add an event listener for hamburger
   document.querySelector(".hamburger").addEventListener("click", () => {
     document.querySelector(".left").style.left = "0";
   });
 
-  // Add an event listener for close button
   document.querySelector(".close").addEventListener("click", () => {
     document.querySelector(".left").style.left = "-120%";
   });
 
-  // Add an event listener to previous
   previous.addEventListener("click", () => {
     currentSong.pause();
     console.log("Previous clicked");
@@ -172,7 +177,6 @@ async function main() {
     }
   });
 
-  // Add an event listener to next song
   next.addEventListener("click", () => {
     currentSong.pause();
     console.log("Next clicked");
@@ -183,7 +187,6 @@ async function main() {
     }
   });
 
-  // Add an event to volume
   document
     .querySelector(".range")
     .getElementsByTagName("input")[0]
@@ -197,14 +200,12 @@ async function main() {
       }
     });
 
-  // Change seekbar color according to song play
   currentSong.addEventListener("timeupdate", () => {
     const seekbar = document.querySelector(".seekbar");
     const percent = (currentSong.currentTime / currentSong.duration) * 100;
     seekbar.style.background = `linear-gradient(to right, #14D4FF ${percent}%, #000000 ${percent}%)`;
   });
 
-  // Add event listener to mute the track
   document.querySelector(".volume>img").addEventListener("click", (e) => {
     if (e.target.src.includes("images/volume.svg")) {
       e.target.src = e.target.src.replace(
@@ -227,7 +228,6 @@ async function main() {
     }
   });
 
-  //Add one song finish after another song automatically plays
   currentSong.addEventListener("ended", () => {
     let index = songs.indexOf(currentSong.src.split("/").slice(-1)[0]);
     if (index + 1 < songs.length) {
@@ -235,7 +235,6 @@ async function main() {
     }
   });
 
-  // Add an event listener to the "ended" event of the current song
   currentSong.addEventListener("ended", () => {
     let index = songs.indexOf(currentSong.src.split("/").slice(-1)[0]);
     if (index + 1 < songs.length) {

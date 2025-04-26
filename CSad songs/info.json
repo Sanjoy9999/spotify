@@ -1,5 +1,9 @@
 {
     "title": "Sad Songs",
-    "description": "Songs for you"
-
+    "description": "Songs for you",
+    "songs": [
+        "Bekhayali.mp3",
+        "Mann Bharryaa.mp3",
+        "Galliyan.mp3"
+    ]
 }

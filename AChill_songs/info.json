@@ -1,5 +1,9 @@
 {
     "title": "Chill Songs",
-    "description": "Cover Songs for you"
-  }
-  
+    "description": "Cover Songs for you",
+    "songs": [
+        "295.mp3",
+        "Excuses.mp3",
+        "Manjha.mp3"
+    ]
+}

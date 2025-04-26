@@ -1,4 +1,9 @@
 {
   "title": "Romantic Songs",
-  "description": "Cover Songs for you"
+  "description": "Cover Songs for you",
+  "songs": [
+    "Tum hi ho.mp3",
+    "Dekha Hazaro Dafaa.mp3",
+    "Raatan Lambiyan.mp3"
+  ]
 }
