@@ -20,8 +20,8 @@ function secondsToMinutesSeconds(seconds) {
 async function getSongs(folder) {
     currFolder = folder;
   
-    // Assuming songs are in a directory under '/songs/'
-    let a = await fetch(`/${folder}/`);
+    // Change absolute path to relative path
+    let a = await fetch(`./songs/${folder}/`);
     let response = await a.text();
     
     let div = document.createElement("div");
@@ -67,7 +67,8 @@ async function getSongs(folder) {
 
 
 const playMusic = (track, pause = false) => {
-  currentSong.src = `/${currFolder}/` + track;
+  // Change absolute path to relative path
+  currentSong.src = `./songs/${currFolder}/` + track;
   if (!pause) {
     currentSong.play();
     play.src = "images/pause.svg";
@@ -79,7 +80,8 @@ const playMusic = (track, pause = false) => {
 
 
 async function displayAlbums() {
-  let response = await fetch('/songs/');
+  // Change absolute path to relative path
+  let response = await fetch('./songs/');
   let text = await response.text();
 
   let div = document.createElement("div");
@@ -103,7 +105,8 @@ async function displayAlbums() {
       console.log(`Extracted folder name: ${folder}`);
 
       try {
-        let albumInfo = await fetch(`/songs/${folder}/info.json`);
+        // Change absolute path to relative path
+        let albumInfo = await fetch(`./songs/${folder}/info.json`);
 
         if (!albumInfo.ok) {
           throw new Error(`Could not fetch info.json for folder: ${folder}. Status: ${albumInfo.status}`);
@@ -118,7 +121,7 @@ async function displayAlbums() {
                 <path d="M5 20V4L19 12L5 20Z" stroke="#141B34" fill="#000"></path>
               </svg>
             </div>
-            <img src="/songs/${folder}/cover.jpeg" alt="Album cover for ${albumData.title}">
+            <img src="./songs/${folder}/cover.jpeg" alt="Album cover for ${albumData.title}">
             <h2>${albumData.title}</h2>
             <p>${albumData.description}</p>
           </div>`;
